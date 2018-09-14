@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+
+<head>
+    <meta charset="utf-8">
+    <style>
+        .axis text {
+            font: 10px sans-serif;
+        }
+
+        .axis line,
+        .axis path {
+            fill: none;
+            stroke: #000;
+            shape-rendering: crispEdges;
+        }
+
+        .axis--x path {
+            display: none;
+        }
+
+        .path-line {
+            fill: none;
+            stroke: yellow;
+            stroke-width: 1.5px;
+        }
+
+        svg {
+            background: #f0f0f0;
+        }
+    </style>
+    <title></title>
+    <script src="https://d3js.org/d3.v4.min.js"></script>
+</head>
+
+<body>
+    <h2>Stacked Bar Graph</h2>
+    <div id='stacked-bar'></div>
+    <script>
+        var initStackedBarChart = {
+            draw: function (config) {
+                me = this,
+                    domEle = config.element,
+                    stackKey = config.key,
+                    data = config.data,
+                    margin = {
+                        top: 20,
+                        right: 20,
+                        bottom: 60,
+                        left: 100
+                    },
+                    parseDate = d3.timeParse("%Y"),
+                    width = 1860 - margin.left - margin.right,
+                    height = 500 - margin.top - margin.bottom,
+                    xScale = d3.scaleBand().range([0, width]).padding(0.1),
+                    yScale = d3.scaleLinear().range([height, 0]),
+                    color = d3.scaleOrdinal(d3.schemeCategory20),
+                    xAxis = d3.axisBottom(xScale).tickFormat(d3.timeFormat("%Y")),
+                    yAxis = d3.axisLeft(yScale),
+                    svg = d3.select("#" + domEle).append("svg")
+                        .attr("width", width + margin.left + margin.right)
+                        .attr("height", height + margin.top + margin.bottom)
+                        .append("g")
+                        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+                var stack = d3.stack()
+                    .keys(stackKey)
+                    .order(d3.stackOrderNone)
+                    .offset(d3.stackOffsetNone);
+
+                var layers = stack(data);
+                data.sort(function (a, b) {
+                    return b.Property - a.Property;
+                });
+                xScale.domain(data.map(function (d) {
+                    return parseDate(d.yr);
+                }));
+                yScale.domain([0, d3.max(layers[layers.length - 1], function (d) {
+                    return d[0] + d[1];
+                })]).nice();
+
+                var layer = svg.selectAll(".layer")
+                    .data(layers)
+                    .enter().append("g")
+                    .attr("class", "layer")
+                    .style("fill", function (d, i) {
+                        return color(i);
+                    });
+
+                layer.selectAll("rect")
+                    .data(function (d) {
+                        return d;
+                    })
+                    .enter().append("rect")
+                    .attr("x", function (d) {
+                        return xScale(parseDate(d.data.yr));
+                    })
+                    .attr("y", function (d) {
+                        return yScale(d[1]);
+                    })
+                    .attr("height", function (d) {
+                        return yScale(d[0]) - yScale(d[1]);
+                    })
+                    .attr("width", xScale.bandwidth());
+
+                svg.append("g")
+                    .attr("class", "axis axis--x")
+                    .attr("transform", "translate(0," + (height + 10) + ")")
+                    .call(xAxis);
+
+                svg.append("g")
+                    .attr("class", "axis axis--y")
+                    .attr("transform", "translate(0,0)")
+                    .call(yAxis);
+                svg.append("text")
+                    .attr("transform",
+                        "translate(" + (width / 2) + " ," +
+                        (height + 50) + ")")
+                    .style("text-anchor", "middle")
+                    .text("Year");
+                svg.append("text")
+                    .attr("transform", "rotate(-90)")
+                    .attr("y", 0 - margin.left)
+                    .attr("x", 0 - (height / 2))
+                    .attr("dy", "1em")
+                    .style("text-anchor", "middle")
+                    .text("Counter");
+            }
+        }
+        // var data =
+
+        // 	[{
+        // 		"Year": "2001",
+        // 		"Vehicles": 27831,
+        // 		"Property": 27158,
+        // 		"State_Sup_Property": 559
+        // 	}, {
+        // 		"Year": "2002",
+        // 		"Vehicles": 27540,
+        // 		"Property": 26329,
+        // 		"State_Sup_Property": 535
+        // 	}, {
+        // 		"Year": "2003",
+        // 		"Vehicles": 27223,
+        // 		"Property": 24412,
+        // 		"State_Sup_Property": 494
+        // 	}, {
+        // 		"Year": "2001",
+        // 		"Vehicles": 25638,
+        // 		"Property": 24157,
+        // 		"State_Sup_Property": 383
+        // 	}, {
+        // 		"Year": "2005",
+        // 		"Vehicles": 26238,
+        // 		"Property": 24548,
+        // 		"State_Sup_Property": 334
+        // 	}, {
+        // 		"Year": "2006",
+        // 		"Vehicles": 26585,
+        // 		"Property": 25149,
+        // 		"State_Sup_Property": 307
+        // 	}, {
+        // 		"Year": "2007",
+        // 		"Vehicles": 24906,
+        // 		"Property": 23606,
+        // 		"State_Sup_Property": 253
+        // 	}, {
+        // 		"Year": "2008",
+        // 		"Vehicles": 25570,
+        // 		"Property": 22994,
+        // 		"State_Sup_Property": 229
+        // 	}, {
+        // 		"Year": "2009",
+        // 		"Vehicles": 22372,
+        // 		"Property": 20834,
+        // 		"State_Sup_Property": 193
+        // 	}, {
+        // 		"Year": "2010",
+        // 		"Vehicles": 19330,
+        // 		"Property": 17864,
+        // 		"State_Sup_Property": 170
+        // 	}, {
+        // 		"Year": "2011",
+        // 		"Vehicles": 17358,
+        // 		"Property": 16897,
+        // 		"State_Sup_Property": 147
+        // 	}, {
+        // 		"Year": "2012",
+        // 		"Vehicles": 16997,
+        // 		"Property": 16352,
+        // 		"State_Sup_Property": 164
+        // 	}, {
+        // 		"Year": "2013",
+        // 		"Vehicles": 14290,
+        // 		"Property": 14124,
+        // 		"State_Sup_Property": 142
+        // 	}, {
+        // 		"Year": "2014",
+        // 		"Vehicles": 13215,
+        // 		"Property": 12766,
+        // 		"State_Sup_Property": 133
+        // 	}, {
+        // 		"Year": "2015",
+        // 		"Vehicles": 14232,
+        // 		"Property": 13190,
+        // 		"State_Sup_Property": 129
+        // 	}, {
+        // 		"Year": "2016",
+        // 		"Vehicles": 4247,
+        // 		"Property": 3985,
+        // 		"State_Sup_Property": 33
+        // 	}];
+
+
+        d3.json("./output/part4.json", function (error, data) {
+            if (error) throw error;
+
+            var key = ["rval", "uval"];
+            initStackedBarChart.draw({
+                data: data,
+                key: key,
+                element: 'stacked-bar'
+            });
+
+        });
+    </script>

@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+    /* set the CSS */
+
+    .line {
+        fill: none;
+        stroke: steelblue;
+        stroke-width: 2px;
+    }
+</style>
+
+<body>
+
+    <!-- load the d3.js library -->
+    <script src="https://d3js.org/d3.v4.min.js"></script>
+    <script>
+
+        // set the dimensions and margins of the graph
+        var margin = { top: 40, right: 20, bottom: 70, left: 70 },
+            width = 960 - margin.left - margin.right,
+            height = 500 - margin.top - margin.bottom;
+
+        // parse the Year / time
+        var parseTime = d3.timeParse("%Y");
+
+        // set the ranges
+        var x = d3.scaleTime().range([0, width]);
+        var y = d3.scaleLinear().range([height, 0]);
+
+        // define the line
+        var valueline2 = d3.line()
+            .x(function (d) { return x(d.yr); })
+            .y(function (d) { return y(d['urban_value']); });
+        // define the line
+        var valueline3 = d3.line()
+            .x(function (d) { return x(d.yr); })
+            .y(function (d) { return y(d['rural_val']); });
+
+        // append the svg obgect to the body of the page
+        // appends a 'group' element to 'svg'
+        // moves the 'group' element to the top left margin
+        var svg = d3.select("body").append("svg")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom)
+            .append("g")
+            .attr("transform",
+                "translate(" + margin.left + "," + margin.top + ")");
+
+        function draw(data) {
+
+            
+console.log(data);
+            // format the data
+            data.forEach(function (d) {
+                d.yr = parseTime(d.yr);
+                d['urban_value'] = +d['urban_value'];
+                d['rural_val'] = +d['rural_val'];
+                // console.log(d.urban_value);
+                // console.log(d.rural_val);
+            });
+
+            // sort years ascending
+            data.sort(function (a, b) {
+                return a["yr"] - b["yr"];
+            })
+
+            // Scale the range of the data
+            x.domain(d3.extent(data, function (d) { return d.yr; }));
+            y.domain([0, d3.max(data, function (d) {
+                return Math.max( d['urban_value'], d['rural_val']);
+            })]);
+
+            // Add the valueline path.
+            svg.append("path")
+                .data([data])
+                .attr("class", "line")
+                .style("stroke", "green")
+                .attr("d", valueline2);
+            // Add the valueline path.
+            svg.append("path")
+                .data([data])
+                .attr("class", "line")
+                .style("stroke", "red")
+                .attr("d", valueline3);
+            // Add the X Axis
+            svg.append("g")
+                .attr("transform", "translate(0," + height + ")")
+                .call(d3.axisBottom(x));
+
+            // Add the text label for the Y axis
+            svg.append("text")
+                .attr("transform", "rotate(-90)")
+                .attr("y", 0 - margin.left)
+                .attr("x", 0 - (height / 2))
+                .attr("dy", "1em")
+                .style("text-anchor", "middle")
+                .text("Value")
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold");
+
+            // Add the Y Axis
+            svg.append("g")
+                .call(d3.axisLeft(y));
+
+            // Add the text label for the lines
+            // svg.append("circle")        // attach a circle
+            //     .attr("transform", "translate(" + (width / 4) + " ," + (height + margin.bottom) + ")")
+            //     .attr("cx", (width / 4))           // position the x-centre
+            //     .attr("cy", (height + margin.bottom) - 20)        // position the y-centre
+            //     .attr("r", 5)             // set the radius
+            //     .style("fill", "red");     // set the fill colour 
+            
+            svg.append("text")
+                .attr("transform", "translate(" + (width / 3) + " ," + (height + margin.bottom) + ")")
+                .style("text-anchor", "start")
+                .style("stroke", "red")
+                .text(" - Urban population (% of total)")
+                .attr("font-size", "14px");
+
+            svg.append("text")
+                .attr("transform", "translate(" + (width/1.5) + " ," + (height + margin.bottom) + ")")
+                .style("text-anchor", "start")
+                .style("stroke", "green")
+                .text(" - Rural population (% of total)")
+                .attr("font-size", "14px");
+
+            // Add the text label for the x axis
+            svg.append("text")
+                .attr("transform", "translate(" + (width / 2) + " ," + (height + margin.bottom - 25) + ")")
+                .style("text-anchor", "middle")
+                .text("Year")
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold");
+
+             // to add title to graph
+             svg.append("text")
+                .attr("x", (width / 2))             
+                .attr("y", 0 - (margin.top / 2))
+                .attr("text-anchor", "middle")  
+                .style("font-size", "16px") 
+                .style("text-decoration", "underline")  
+                .text("Multi-series line chart")
+                .attr("font-weight", "bold");
+        }
+        // Get the data
+        d3.json("./output/part1.json", function (error, data) {
+            if (error) throw error;
+
+            // trigger render
+            draw(data);
+        });
+
+    </script>
+</body>
